@@ -3,9 +3,10 @@ import os,sys
 import ctypes
 import struct
 import binascii
+import io
 from StringIO import StringIO
 from optparse import OptionParser
-import socket
+#import socket
 
 '''
 2012 Jeff Bryner
@@ -160,8 +161,8 @@ def debug(message):
 if __name__ == '__main__':
     
     parser = OptionParser()
-    parser.add_option("-s", dest='server', default='127.0.0.1', help="name or IP address of server")
-    parser.add_option("-p", dest='port', default=6666,type='int', help="port number")
+    #parser.add_option("-s", dest='server', default='127.0.0.1', help="name or IP address of server")
+    #parser.add_option("-p", dest='port', default=6666,type='int', help="port number")
     parser.add_option("-f", dest='input', default="stdin",help="input: stdin default, drive name, filename, etc")
     parser.add_option("-d", "--debug",action="store_true", dest="debug", default=False, help="turn on debugging output")    
     
@@ -221,27 +222,28 @@ if __name__ == '__main__':
             dataruns=mftraw[ReadPtr+ATRrecord['run_off']:ReadPtr+ATRrecord['len']]
             prevCluster=None
             prevSeek=0
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.connect((options.server,options.port))            
-            
-            for length,cluster in decodeDataRuns(dataruns):
-                debug('%d %d'%(length,cluster))
-                debug('drivepos: %d'%(ntfsdrive.tell()))
-                
-                if prevCluster==None:    
-                    ntfsdrive.seek(cluster*bytesPerSector*sectorsPerCluster)
-                    prevSeek=ntfsdrive.tell()
-                    sock.send(ntfsdrive.read(length*bytesPerSector*sectorsPerCluster))
-                    prevCluster=cluster
-                else:
-                    ntfsdrive.seek(prevSeek)
-                    newpos=prevSeek + (cluster*bytesPerSector*sectorsPerCluster)
-                    debug('seekpos: %d'%(newpos))
-                    ntfsdrive.seek(newpos)
-                    prevSeek=ntfsdrive.tell()                    
-                    sock.send(ntfsdrive.read(length*bytesPerSector*sectorsPerCluster))
-                    prevCluster=cluster
-            sock.close                    
+            #sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            #sock.connect((options.server,options.port))            
+            with io.open('c:\mft.file2', 'w') as file:
+                for length,cluster in decodeDataRuns(dataruns):
+                    debug('%d %d'%(length,cluster))
+                    debug('drivepos: %d'%(ntfsdrive.tell()))
+                    
+                    if prevCluster==None:    
+                        ntfsdrive.seek(cluster*bytesPerSector*sectorsPerCluster)
+                        prevSeek=ntfsdrive.tell()
+                        file.write(ntfsdrive.read(length*bytesPerSector*sectorsPerCluster))
+                        #sock.send(ntfsdrive.read(length*bytesPerSector*sectorsPerCluster))
+                        prevCluster=cluster
+                    else:
+                        ntfsdrive.seek(prevSeek)
+                        newpos=prevSeek + (cluster*bytesPerSector*sectorsPerCluster)
+                        debug('seekpos: %d'%(newpos))
+                        ntfsdrive.seek(newpos)
+                        prevSeek=ntfsdrive.tell()                    
+                        sock.send(ntfsdrive.read(length*bytesPerSector*sectorsPerCluster))
+                        prevCluster=cluster
+            #sock.close                    
             break
         if ATRrecord['len'] > 0:
             ReadPtr = ReadPtr + ATRrecord['len']
