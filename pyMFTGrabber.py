@@ -14,10 +14,8 @@ Script to retrieve the Master File Table (MFT) record for an NTFS file system fr
 
 Usage: 
 Victim/Client NTFS/Windows box: 
- pyMFTGrabber.py -f "\\.C:" -s 10.200.1.1 -p 6666
+ pyMFTGrabber.py -f "\\.C:" -o c:\mft.file
 
-Forensic workstation at 10.200.1.1: 
-nc -l -p 6666 >mft.dd
 
 You can then use the analyzeMFT.py ( https://github.com/dkovar/analyzeMFT ) to decode the MFT
 and it's associated file records.
@@ -162,7 +160,7 @@ if __name__ == '__main__':
     
     parser = OptionParser()
     #parser.add_option("-s", dest='server', default='127.0.0.1', help="name or IP address of server")
-    #parser.add_option("-p", dest='port', default=6666,type='int', help="port number")
+    parser.add_option("-o", dest='outputfile', default=c:\mftfile,type='string', help="outputfile")
     parser.add_option("-f", dest='input', default="stdin",help="input: stdin default, drive name, filename, etc")
     parser.add_option("-d", "--debug",action="store_true", dest="debug", default=False, help="turn on debugging output")    
     
@@ -224,7 +222,7 @@ if __name__ == '__main__':
             prevSeek=0
             #sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             #sock.connect((options.server,options.port))            
-            with io.open('c:\mft.file2', 'w') as file:
+            with io.open(options.outputfile, 'w') as file:
                 for length,cluster in decodeDataRuns(dataruns):
                     debug('%d %d'%(length,cluster))
                     debug('drivepos: %d'%(ntfsdrive.tell()))
